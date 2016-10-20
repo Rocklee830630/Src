@@ -1,0 +1,464 @@
+﻿@using GMS.Framework.Contract
+@using GMS.Framework.Utility
+@using GMS.Framework.Web.Controls
+@using GMS.Store.Contract
+@using GMS.Web
+@using System.Web.Mvc
+
+@model PagedList<DictionaryProperty>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml"; 
+}
+@section PageSpecificStyleSheetIncludes{
+<link href="/Content/zTree.theme.metro.css" rel="stylesheet" />
+<link href="/scripts/uploadify/uploadify.css" rel="stylesheet" />
+ <style type="text/css">
+   #some_file_queue {
+    background-color: #FFF;
+    border-radius: 1px;
+    /*box-shadow: 0 1px 3px rgba(0,0,0,0.25);*/
+    height: 45px;
+    margin-bottom:5px;
+     
+    overflow: auto;
+    /*padding: 1px 2px;*/
+    width: 250px;
+}
+</style>
+}
+ 
+<div class="row-fluid" id="pagediv">
+    <div class="span3" id="tree">
+        <div id="menuContent" class="menuContent" style="width:100%;border:1px solid rgb(170,170,170);z-index:10;padding:1ex;">
+            <a class="btn blue" id="addParent" href="#" onclick="return false;"><i class="icon-trash icon-white"></i> 添加分类</a>
+            <a class="btn blue" id="addLeaf" href="#" onclick="return false;"><i class="icon-trash icon-white"></i> 添加订单</a>
+            <a class="btn blue" id="edit" href="#" onclick="return false;"><i class="icon-trash icon-white"></i> 编辑</a>
+            @*<a class="btn red" id="remove" href="#" onclick="return false;"><i class="icon-trash icon-white"></i> 删除</a>*@
+             <ul id="treeDemo" class="ztree" style="margin-top:0; width:100%; height:auto;"></ul> 
+                @*<ul id="treeDemo" class="ztree"></ul>*@ 
+        </div> 
+    </div>
+    <div class="span2"> 
+        <div style="padding-bottom: 2ex;" nowrap> 
+            <a class="btn blue thickbox" id="addProperty" title='添加材料' href="@Url.Action("Create")?TB_iframe=true&height=350&width=400&modal=true"><i class="icon-plus icon-white"></i> 添加材料</a>
+            <a class="btn red" id="deleteproperty" href="javascript:;"><i class="icon-trash icon-white"></i> 删除</a> 
+        </div> 
+    </div>
+    <div class="span1"> 
+        <div style="padding-left: 2ex;" nowrap> 
+            <input type="file" name="uploadify" id="uploadify" />
+            @*<a href="javascript:void(0)" class="easyui-linkbutton" onclick="up()">开始上传</a>*@
+        </div> 
+    </div>
+    <div class="span2" id="some_file_queue"></div> 
+    <div class="span9" id="tablediv">
+     Html.RenderPartial("_DPropertyPartialPage", Model); 
+    </div> 
+</div>
+ 
+<div class="dataTables_paginate paging_bootstrap pagination">
+    @Html.Pager(Model, new PagerOptions() { ShowTotalItemCount = true })
+</div>
+@section PageSpecificJavascriptIncludes{ 
+    <script src="@Url.StaticFile("/Scripts/jquery.ztree.all-3.5.js")" type="text/javascript"></script> 
+    <script src="@Url.StaticFile("/Scripts/uploadify/jquery.uploadify.js")" type="text/javascript"></script>
+    <script type="text/javascript">
+        //$(function () {
+       
+
+        //});
+        var SelectedId = ""; //全局变量随时获取treeid
+        //function up() { 
+        //    $('#uploadify').uploadify("settings", "formData", { 'treeidt': SelectedId });
+        //    $('#uploadify').uploadify('upload', '*');//上传所有文件
+        //};
+        
+    var setting = {
+        view: {
+            selectedMulti: false
+        },
+        check: {
+            enable: false
+        },
+        data: {
+            keep: {
+                parent: true,
+                leaf: true
+            },
+            simpleData: {
+                enable: true
+            }
+        },
+        edit: {
+            enable: true,
+            showRenameBtn: false,
+            showRemoveBtn: function (treeId, treeNode) {
+                var b = false;
+                if (clickBtn) {
+                    b = true;
+
+                } else { b = false; }
+                clickBtn = false;
+                return b;
+            }
+        },
+        callback: {
+            onRename: zTreeOnRename,
+            onRemove: zTreeOnRemove,
+            beforeClick: zTreeBeforeClick,
+            beforeRemove: beforeRemove,
+            onClick: zTreeOnClick
+        }
+    };
+
+    $("#deleteproperty").click(function () {
+        var message = "你确定要删除勾选的记录吗?删除材料将会同时删除库存记录和出入库记录！点击确定删除！";
+        if ($(this).attr("message"))
+            message = $(this).attr("message") + "，" + message;
+        if (confirm(message))
+        {
+                if ($("input:checked").length == 1)
+                {
+                    return;
+                }
+                var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+
+                nodes = zTree.getSelectedNodes();
+                var treeid = nodes[0].id;
+                //alert(treeid);
+                //$("#mainForm").submit();
+                var ids = "";
+                $("input:checked").each(function () {
+                    ids = ids + $(this).val() + ",";
+                });
+                 //alert("删除");
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("Delete")',
+                    data: { ids: ids, treeItemID: treeid },
+                    ContentType: 'application/html;charset=utf-8',
+                    dataType: 'html'
+                })
+                .success(function (datas) {
+                    parent.$('#tablediv').html(datas);
+                });
+            }
+    });
+
+
+    function zTreeOnClick(event, treeId, treeNode) {
+        //alert(treeNode.id + ", " + treeNode.name);
+        //点击刷新右侧列表
+        SelectedId = treeNode.id;
+        
+        GetProperty(treeNode.isParent, treeNode.id);
+    };
+
+    //设置选中后才显示删除按钮
+    var clickBtn = false;
+    function zTreeBeforeClick(treeId, treeNode, clickFlag) {
+        //alert(treeNode.tId + ", " + treeNode.name);
+        clickBtn = true;
+
+    }
+    //根据节点获取属性列表
+    function GetProperty(isParent, treeId) {
+
+        x = document.getElementById("tablediv");
+        x.style.color = "black";
+        if (isParent)
+        {
+            $("#addProperty").hide();
+            $("#uploadify").hide();
+            $("#deleteproperty").hide();
+            $("#tablediv").html("<!DOCTYPE html><html><head></head><body><font size=\"4\" color=\"red\">提示：该节点不是订单节点，不能填加数据！！！</font></body></html>");
+            x = document.getElementById("tablediv");
+            x.style.color = "red";
+        }
+        else {
+            $("#addProperty").show();
+            $("#uploadify").show();
+            $("#deleteproperty").show();
+            $.ajax({
+            type: 'POST',
+            url: '@Url.Action("DPropertyPartialPage")',
+            data: { id: treeId, isParent: isParent },
+            ContentType: 'application/html;charset=utf-8',
+            dataType:'html'
+            })
+            .success(function (datas) {
+                $('#tablediv').html(datas);
+            })
+        }
+    }
+
+    //是不是点击编辑按钮重命名，还有可能是新增节点然后重命名
+    var EditButton = false;
+    //编辑或添加时节点类型是父节点还是子节点
+    var AddType = null;
+    function zTreeOnRename(event, treeId, treeNode) {
+        if (EditButton)
+        {
+            var parentId;
+            if (treeNode.pId == null)
+                parentId = "11111111-1111-1111-1111-111111111111";
+            else
+                parentId = treeNode.pId;
+
+            var dataString = "{\"id\":\"" + treeNode.id + "\",\"pid\":\"" + parentId + "\",\"name\":\"" + treeNode.name + "\",\"type\":\"" + AddType + "\",\"LinkUrl\":\"\"}";
+            $.ajax({
+                url: '@Url.Action("EditTree")',
+                data: dataString,
+                type: 'POST',
+                dataType: "text",
+                ContentType: "application/json; charset=utf-8",
+            });
+            EditButton = false;
+            return;
+        }
+        var parentId;
+        if (treeNode.pId == null)
+            parentId = "11111111-1111-1111-1111-111111111111";
+        else
+            parentId = treeNode.pId;
+        //alert(AddType);
+        var dataString = "{\"id\":\"" + treeNode.id + "\",\"pid\":\"" + parentId + "\",\"name\":\"" + treeNode.name + "\",\"type\":\"" + AddType + "\",\"LinkUrl\":\"\"}";
+//alert(dataString);
+        $.ajax({
+            url: '@Url.Action("AddType")',
+            data: dataString,
+            type: 'POST',
+            dataType: "text",
+            ContentType: "application/json; charset=utf-8",
+        });
+        AddType = null;
+    }
+        //获取当前节点下的所有子节点
+        function getChildNodes(treeNode) {
+            var treeObj = $.fn.zTree.getZTreeObj("treeDemo");
+            var childNodes = treeObj.transformToArray(treeNode);
+
+            var nodes = new Array();
+            for (i = 0; i < childNodes.length; i++) {
+                nodes[i] = childNodes[i].id;
+            }
+            return nodes.join(",");
+        }
+        //删除节点
+   function zTreeOnRemove(event, treeId, treeNode) {
+            var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+            var nodes = getChildNodes(treeNode);
+
+        $.ajax({
+            url: '@Url.Action("RemoveTree")',
+            data: nodes,
+            type: 'POST',
+            dataType: "text",
+            ContentType: "application/json; charset=utf-8",
+        });
+    }
+    //删除前判断
+        function beforeRemove(treeId, treeNode) {
+
+            var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+
+            var node = zTree.getSelectedNodes();
+            zTree.selectNode(node[0],false,false);
+            var treeNode = node[0];
+
+            var nodess = getChildNodes(treeNode);
+            //alert(nodess.length.toString());
+
+            if (nodess.length - 36 > 0) {
+            var msg = "要删除的节点有子节点，如果删除将连同子节点和相关库房记录都会一起删掉。\n\n请确认！";
+            return confirm(msg);
+        }else {
+            return confirm("确认删除 订单 -- " + treeNode.name + " 吗？删除后该订单的所有数据都将会删除");
+        }
+    }
+
+    //随机获取节点ID
+    function GetNodeRandomId()
+    {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    function createTree()
+    {
+        var zNodes;
+        $.ajax({
+            url: '@Url.Action("GetTree")',
+            data: { id: "1" },
+            type: 'POST',
+            dataType: "text",
+            ContentType: "application/json; charset=utf-8",
+            success: function (data) {
+                zNodes = data;
+                $.fn.zTree.init($("#treeDemo"), setting, eval('(' + zNodes + ')'));
+                var treeObj = $.fn.zTree.getZTreeObj("treeDemo");
+                var nodes = treeObj.getNodes();
+                if (nodes.length > 0) {
+                    treeObj.selectNode(nodes[0]);
+                };
+                treeObj.expandAll(true);
+            },
+            error: function (msg) {
+                alert("失败");
+            }
+        });
+    }
+
+        $(document).ready(function () {
+            $("#addProperty").hide();
+           
+            $("#uploadify").hide();
+            $("#deleteproperty").hide();
+            //$.fn.zTree.init($("#treeDemo"), setting, zNodes);
+            
+           
+            $("#tablediv").html("<!DOCTYPE html><html><head></head><body><font size=\"4\" color=\"red\">提示：该节点不是订单节点，不能填加数据！！！</font></body></html>");
+
+          
+            $('#uploadify').uploadify({ 
+                uploader: '@Url.Action("UploadFile")',           // 服务器端处理地址
+                swf: '@Url.StaticFile("/Scripts/uploadify/uploadify.swf")',    // 上传使用的 Flash
+                'queueID': 'some_file_queue',
+                'formData': { 'treeidt':SelectedId},
+
+                'method': 'get',
+                width: 97,                          // 按钮的宽度
+                height: 32,                         // 按钮的高度
+                buttonText: "批量导入",                 // 按钮上的文字
+                buttonCursor: 'hand',                // 按钮的鼠标图标
+
+                fileObjName: 'Filedata',            // 上传参数名称
+
+                // 两个配套使用
+                fileTypeExts: "*.xls;*.xlsx",             // 扩展名
+                fileTypeDesc: "请选择EXCEL文件",     // 文件说明
+
+                auto: true,                // 选择之后，自动开始上传
+                multi: false,               // 是否支持同时上传多个文件
+                //queueSizeLimit: 5          // 允许多文件上传的时候，同时上传文件的个数
+                'onUploadStart' : function() { 
+                    //上传前获取下ID，否则还是初始化时候为空的ID
+                    $('#uploadify').uploadify("settings", "formData", { 'treeidt': SelectedId });
+                },
+                'onUploadSuccess': function (file, data, response) {
+                    alert('数据导入成功！');
+                    $('#tablediv').html(data);
+                },
+                'onUploadError': function (file, errorCode, errorMsg, errorString) {
+                    alert('数据格式有问题，请检查后导入 ' + errorString+SelectedId);
+                }
+            });
+            $("#addProperty").hide();
+            $("#uploadify").hide();
+            $("#deleteproperty").hide();
+            createTree();
+        })
+    //function removeHoverDom(treeId, treeNode) {
+    //    $("#addBtn_" + treeNode.tId).unbind().remove();
+    //};
+        //编辑节点
+    function edit() {
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
+        nodes = zTree.getSelectedNodes(),
+        treeNode = nodes[0];
+        if (nodes.length == 0) {
+            alert("请先选择一个节点");
+            return;
+        }
+        //alert(treeNode.isParent);
+        if (treeNode.isParent)
+        {
+            AddType = false;
+        }
+        else
+        {
+            //子节点
+            AddType = true;
+        }
+        zTree.editName(treeNode);
+        EditButton = true;
+    };
+
+    function remove(e) {
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
+        nodes = zTree.getSelectedNodes(),
+        treeNode = nodes[0];
+
+        if (nodes.length == 0) {
+            alert("请先选择一个节点");
+            return;
+        }
+        var callbackFlag = $("#callbackTrigger").attr("checked");
+        zTree.removeNode(treeNode, callbackFlag);
+    };
+    $(document).ready(function () {
+        $("#addParent").bind("click", { isParent: true }, addParent);
+        $("#addLeaf").bind("click", { isParent: false }, addLeaf);
+        $("#edit").bind("click", edit);
+    });
+    //添加分类1
+    var newCount = 1;
+    function addParent(e) {
+        AddType = false;
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
+       isParent = e.data.isParent,
+       nodes = zTree.getSelectedNodes(),
+       treeNode = nodes[0];
+        if (treeNode) {
+            treeNode = zTree.addNodes(treeNode, { id: GetNodeRandomId(), pId: treeNode.id, isParent: isParent, name: "类型" + (newCount++) });
+        } else {
+            treeNode = zTree.addNodes(null, { id: GetNodeRandomId(), pId: 0, isParent: isParent, name: "类型" + (newCount++) });
+        }
+        if (treeNode) {
+            zTree.editName(treeNode[0]);
+        } else {
+            alert("订单下无法再增加分类！");
+        }
+    };
+     //添加子节点
+    var newCount1 = 1;
+    function addLeaf(e) {
+        AddType = true;
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
+        isParent = e.data.isParent,
+        nodes = zTree.getSelectedNodes(),
+        treeNode = nodes[0];
+        if (treeNode) {
+            treeNode = zTree.addNodes(treeNode, { id: GetNodeRandomId(), pId: treeNode.id, isParent: isParent, name: "订单" + (newCount1++) });
+        } else {
+            treeNode = zTree.addNodes(null, { id: GetNodeRandomId(), pId: 0, isParent: isParent, name: "订单" + (newCount1++) });
+        }
+        if (treeNode) {
+            zTree.editName(treeNode[0]);
+        } else {
+            alert("订单无法再增加子订单！");
+        }
+    };
+    function addProperty() {
+        var zTree = $.fn.zTree.getZTreeObj("treeDemo");
+        var treeid = "";
+        for (var i = 0; i < zTree.length; i++) {
+            if (zTree[i].id != null) {
+                treeid = zTree[i].id;
+            }
+        };
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("AddProperty")',
+            data: { id: treeid, isParent: false },
+            ContentType: 'application/html;charset=utf-8',
+            dataType: 'html'
+        })
+        .success(function (datas) {
+            $('#tablediv').html(datas);
+        });
+    }
+    </script>
+}

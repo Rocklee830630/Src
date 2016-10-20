@@ -1,0 +1,137 @@
+﻿@using GMS.Framework.Contract
+@using GMS.Framework.Web.Controls
+@using GMS.Store.Contract 
+@using GMS.Web
+@model DictionaryProperty
+@{
+    Layout = "~/Views/Shared/_DictionaryLayout.Edit.cshtml";
+}
+@section PageSpecificStyleSheetIncludes{
+    <style type="text/css">
+
+
+    </style>
+}
+@section PageSpecificJavascriptIncludes{ 
+
+    <script type="text/javascript"> 
+        $(document).ready(function () {
+            
+        }); 
+        function validate(num) {
+            var reg = /^\d+(?=\.{0,1}\d+$|$)/
+            if (reg.test(num)) return true;
+            return false;
+        }
+        $("#submit").click(function () {
+            $('#validtxt').text(" ");
+            var dpitemid = dpid.value; 
+            var clmctext = clmc.value; 
+            var pmname = pm.value; 
+            var mfname = mf.value;
+            var jsname = js.value;
+            if (clmctext == "" || clmctext == null) {
+                $('#validtxt').text("材料名称不能为空！");
+                $('#validtxt').css('color', '#FF0000');
+                return false;
+            }
+            if (pmname == "" || pmname == null) {
+                $('#validtxt').text("品名不能为空！");
+                $('#validtxt').css('color', '#FF0000');
+                return false;
+            }
+            if (mfname == "" || mfname == null) {
+                $('#validtxt').text("门幅不能为空！");
+                $('#validtxt').css('color', '#FF0000');
+                return false;
+            }
+            if (jsname == "" || jsname == null) {
+                $('#validtxt').text("基数不能为空！");
+                $('#validtxt').css('color', '#FF0000');
+                return false;
+            }
+            if (!validate(jsname)) {
+                $('#validtxt').text("基数必须是数字！");
+                $('#validtxt').css('color', '#FF0000');
+                return false;
+            } 
+            if (dpitemid == "00000000-0000-0000-0000-000000000000")
+            {
+                //alert("添加按钮");
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("AddProperty")',
+                    data: { clmc: clmctext, pm: pmname, mf: mfname, js: jsname }, 
+                    ContentType: 'application/html;charset=utf-8',
+                    dataType: 'html'
+                })
+                .success(function (datas) {  
+                    parent.$('#tablediv').html(datas);
+                    parent.tb_remove();
+                });
+            }
+            else 
+            {
+                //alert("编辑按钮");
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("EditProperty")',
+                    data: { dpid: dpitemid,clmc: clmctext, pm: pmname, mf: mfname, js: jsname }, 
+                    ContentType: 'application/html;charset=utf-8',
+                    dataType: 'html'
+                })
+                .success(function (datas) {  
+                    parent.$('#tablediv').html(datas);
+                    parent.tb_remove();
+                }); 
+            }
+        });
+    </script>
+}
+@section MainContent{ 
+    <div class="portlet-body form-horizontal form-bordered form-row-stripped">
+        <div class="row-fluid"> 
+            <div class="control-group">
+                <div class="controls" hidden="hidden">
+                    @Html.TextBoxFor(m => m.dpid, new { @class = "m-wrap small" }) 
+                </div>
+                <label class="control-label"><span class="required">*</span>材料名称：</label>
+                <div class="controls"> 
+                    @Html.TextBoxFor(m => m.clmc, new { @class = "m-wrap small" })
+                
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label"><span class="required">*</span>品名：</label>
+                <div class="controls">
+                    @Html.TextBoxFor(m => m.pm, new { @class = "m-wrap small" })
+                    <span class="help-inline">@Html.ValidationMessageFor(m => m.pm)</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label"><span class="required">*</span>门幅：</label>
+                <div class="controls">
+                    @Html.TextBoxFor(m => m.mf, new { @class = "m-wrap small" })
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label"><span class="required">*</span>基数：</label>
+                <div class="controls">
+                    @Html.TextBoxFor(m => m.js, new { @class = "m-wrap small" })
+                </div>
+            </div>
+        </div>
+    </div> 
+
+<div style="height:100px;"></div>
+
+<div class="form-actions navbar-fixed-bottom">
+    <button type="submit" id="submit" class="btn blue"><i class="icon-ok"></i> 提交</button>
+    <span id="submitloading" style="display:none;"><img src='@Url.StaticFile("/content/images/loading.gif")' /></span>
+    <button type="button" class="btn" id="cancel">取消</button>
+    <span id="validtxt"></span>
+    @Html.ValidationSummary(false)
+</div>
+}
+
