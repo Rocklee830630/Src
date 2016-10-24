@@ -17,7 +17,7 @@ namespace GMS.Store.Contract
 
         public Guid? store_item_id { get; set; }
 
-        [RegularExpression(@"^[0-9]+(.[0-9]{2})?$", ErrorMessage="请输入正确的库存数量！")]
+        [RegularExpression(@"^(-?[0-9])+(.[0-9]{2})?$", ErrorMessage="请输入正确的库存数量！")]
         public decimal? number { get; set; }
 
         public virtual DictionaryProperty DictionaryProperty { get; set; }

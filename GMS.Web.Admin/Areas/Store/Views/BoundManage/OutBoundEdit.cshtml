@@ -84,11 +84,26 @@
                 $('#validtxt').css('color', '#FF0000');
                 return false;
             }
-            if ($("#khnumber").val()< $("#OutBoundCount").val()) {
-                $('#validtxt').text("材料"+ $("#minclmc").val() + "库存量不足，无法出库！");
-                $('#validtxt').css('color', '#FF0000');
-                return false;
-            }
+            var outcount = $("#OutBoundCount").val();
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetMaxData")",
+                data: { id: orderid, outnumber:outcount},
+                ContentType: "application/text;charset=utf-8",
+                dataType: 'json'
+            })
+            .success(function (datas) {
+                var obj = JSON.parse(datas);
+                if (obj["minclmc"] != null)
+                {
+                    alert(obj["minclmc"]);
+                }
+                $("#khmc").val(obj["khmc"]); 
+                $("#minclmc").val(obj["minclmc"]);
+            })
+            .error(function (msg) {
+                alert("失败");
+            }); 
         });
 
         $(document).ready(function () {
@@ -120,7 +135,7 @@
         }
         $("#citySel").click(function () { showMenu(); return false; });
         //订单发生变化
-        function orderChange(orderid) { 
+        function orderChange(orderid) {
             $.ajax({
                 type: "POST",
                 url: "@Url.Action("GetInBoundData")",
@@ -128,12 +143,12 @@
             ContentType: "application/text;charset=utf-8",
             dataType: 'json'
         })
-        .success(function (datas) {  
-            var obj = JSON.parse(datas); 
-            $("#khmc").val(obj["khmc"]); 
+        .success(function (datas) {
+            var obj = JSON.parse(datas);
+            $("#khmc").val(obj["khmc"]);
             $("#khnumber").val(obj["number"]);
             $("#minclmc").val(obj["minclmc"]);
-        }) 
+        })
         .error(function (msg) {
             alert("失败");
         });

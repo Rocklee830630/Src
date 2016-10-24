@@ -62,5 +62,7 @@ namespace GMS.Store.Contract
         DataTable ReadExcel(string filePath);
 
         decimal GetPropertyNumber(Guid id);
+
+        StoreTable ExistDPInStore(DictionaryProperty dp);
     }
 }

@@ -13,6 +13,7 @@ using NPOI.HSSF.UserModel;
 using System.IO;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
+using System.Data.Entity.Validation;
 
 namespace GMS.Store.BLL
 {
@@ -54,7 +55,7 @@ namespace GMS.Store.BLL
             request = request ?? new StoreTreeNameRequests();
             using (var dbContext = new StoreDbContext())
             {
-                IQueryable<DictionaryProperty> dps = dbContext.DictionaryProperty;
+                IQueryable<DictionaryProperty> dps = dbContext.DictionaryProperty.Include("DictionaryTree");
                 if(request.treeID!=null)
                 { 
                     dps = dps.Where(u => u.leaf_id == request.treeID); 
@@ -227,8 +228,9 @@ namespace GMS.Store.BLL
                 
                 if (item == null)
                 {
-                    st.kcid = Guid.NewGuid();
+                    st.kcid = Guid.NewGuid(); 
                     dbContext.Insert<StoreTable>(st);
+ 
                 }
                 else
                 {
@@ -524,6 +526,22 @@ namespace GMS.Store.BLL
                 else
                 {
                     return dpitem.number.Value;
+                }
+            }
+        }
+
+        public StoreTable ExistDPInStore(DictionaryProperty dp)
+        {
+            using (var dbContext = new StoreDbContext())
+            {
+                var StoreItem = dbContext.StoreTable.Include("DictionaryProperty").Where(u => u.store_item_id.Value == dp.dpid).FirstOrDefault();
+                if (StoreItem == null)
+                {
+                    return null;//库存里不存在的数据为false
+                }
+                else
+                {
+                    return StoreItem;
                 }
             }
         }
