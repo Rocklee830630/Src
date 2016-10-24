@@ -270,14 +270,14 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
             ibp.numbers = new List<int>();
             ibp.number = 0;
             foreach (DictionaryTree dt in OrderList)
-            {
+            { 
                 if (dt.dt_id.ToString() == tempID)
                 {
                     ibp.khmc = this.StoreService.GetTreeName(dt.parent_id);
                     ibp.number=0;
                     int flag = 0;
                     foreach (DictionaryProperty dp in dt.DictionaryProperty)
-                    {
+                    { 
                         ibp.dpid.Add(dp.dpid.ToString());
                         ibp.clmc.Add(dp.clmc);
                         ibp.pm.Add(dp.pm);
