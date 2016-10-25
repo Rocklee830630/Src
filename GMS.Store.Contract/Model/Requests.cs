@@ -41,6 +41,7 @@ namespace GMS.Store.Contract
     {
         public string khmc { get; set; }
         public string ddmc { get; set; }
+        public string export { get; set; }
         public string clmc { get; set; } 
         public string czlx { get; set; }
         public DateTime starttime { get; set; }

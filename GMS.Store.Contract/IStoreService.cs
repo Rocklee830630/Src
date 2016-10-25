@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 namespace GMS.Store.Contract
 {
     public interface IStoreService
-    { 
+    {
+        byte[] DataTable2Excel { get; set; }
+
         //获取树数据
         Object GetDictionaryTreeList(); 
 
