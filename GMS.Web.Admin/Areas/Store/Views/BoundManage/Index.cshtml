@@ -117,6 +117,9 @@
         $("#Name").val("");
         $("#clmc").val("");
     });
+    $("#export").click(function () {
+        alert("测试");
+    })
 </script>
 }
 <div class="row-fluid">
@@ -134,7 +137,8 @@
             <div class="dataTables_filter">
                 <label>
                     <button type="submit" class="btn">搜索 <i class="icon-search"></i></button>
-                    <button class="btn" id="clearContent">清除选项 <i class="icon-trash icon-white"></i></button>
+                    <button type="submit" id="export" href="@Url.Action("ExportToExcel")" class="btn">导出 <i class="icon-share"></i></button>
+                    <button class="btn" id="clearContent">清除选项 <i class="icon-trash icon-white"></i></button> 
                 </label>  
                 <label> 
                     @* 搜索完成后会刷新页面，此处Name是request属性可保存树形节点名字 *@

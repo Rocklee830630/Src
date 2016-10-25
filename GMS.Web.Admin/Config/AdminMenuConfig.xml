@@ -16,6 +16,7 @@
         <AdminMenu name="用户管理" url="/Account/User/Index" info="添加修改删除用户" permission="AccountManage_User" />
         <AdminMenu name="角色管理" url="/Account/Role/Index" info="添加修改删除角色" permission="AccountManage_Role" />
         <AdminMenu name="材料字典管理" url="/Account/Dictionary/Index" info="材料字典管理设置" permission="Order_Itembase" />
+      <AdminMenu name="部门管理" url="/OA/Branch/Index" info="添加修改删除部门信息" permission="OAManage_Branch" />
       </AdminMenuArray>
     </AdminMenuGroup>
 

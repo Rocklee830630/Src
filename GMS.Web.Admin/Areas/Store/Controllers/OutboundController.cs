@@ -7,6 +7,7 @@ using System.Web;
 using System.Web.Mvc;
 using GMS.Framework.Utility;
 using GMS.Store.Contract;
+using System.IO;
 
 namespace GMS.Web.Admin.Areas.Store.Controllers
 {
@@ -17,6 +18,6 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
         {
             var obrlist = this.StoreService.GetOutBound(request);
             return View(obrlist);
-        }
+        } 
     }
 }

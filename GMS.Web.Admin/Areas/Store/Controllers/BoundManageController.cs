@@ -6,7 +6,8 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using GMS.Framework.Utility;
-using GMS.Store.Contract; 
+using GMS.Store.Contract;
+using GMS.OA.Contract;
 
 namespace GMS.Web.Admin.Areas.Store.Controllers
 {
@@ -42,9 +43,10 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
         public ActionResult InBoundEdit()
         {
             var OrderList = this.StoreService.GetOrderList(new OrderRequest());
-            this.ViewBag.OrderType = new SelectList(OrderList, "dt_id", "name");
+            this.ViewBag.OrderType = new SelectList(OrderList, "dt_id", "name"); 
+            
             List<string> clmcs = new List<string>(); 
-            clmcs.Add("请选择材料..."); 
+            clmcs.Add("请选择材料...");  
             this.ViewBag.Materialnames = new SelectList(clmcs); 
 
             var model = new StoreTable();
@@ -59,6 +61,20 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
         {
             var OrderList = this.StoreService.GetOrderList(new OrderRequest());
             this.ViewBag.OrderType = new SelectList(OrderList, "dt_id", "name");
+
+            //获取组织机构列表（领用人）
+            BranchRequest brequest = new BranchRequest();
+            brequest.PageSize = 10000;
+            var lyr = this.OAService.GetBranchList(brequest);
+
+            List<string> clmcs = new List<string>();
+            clmcs.Add("请选择领用人..."); 
+            foreach (Branch branchItem in lyr)
+            {
+                clmcs.Add(branchItem.Name);
+            }
+
+            this.ViewBag.employment = new SelectList(clmcs); 
             var model = new StoreTable();
             return View("OutBoundEdit", model);
         }
@@ -74,7 +90,7 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
             if (collection.AllKeys.Contains("DictionaryProperty.dpid"))
             { 
                 StoreTableRequest request = new StoreTableRequest();
-                request.PageSize = 1000;
+                request.PageSize = 10000;
                 request.Gid = new Guid(collection["DictionaryProperty.dpid"]);
                 int OutProductNumber;
                 if(!int.TryParse(collection["OutBoundCount"],out OutProductNumber))
@@ -82,6 +98,7 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
                     var model = new StoreTable();
                     return View("OutBoundEdit",model);
                 }
+                var lydw = collection["employment"];
                 /// 
                 var result = this.StoreService.GetStoreList(request);
                 Guid tempid = new Guid();//订单ID，出库记录表用 
@@ -108,6 +125,7 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
                         ibr.rkid = Guid.NewGuid();
                         ibr.number = dp.js.Value * Convert.ToDecimal(OutProductNumber);
                         ibr.boundtype = "出库材料";
+                        ibr.employment = lydw;
                         ibr.khmc = this.StoreService.GetParentNameByLeafID(dp.leaf_id.Value);
                         this.StoreService.InsertInboundRecord(ibr);
 
@@ -124,6 +142,7 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
                         ibr.rkid = Guid.NewGuid();
                         ibr.number = dp.js.Value * Convert.ToDecimal(OutProductNumber);
                         ibr.boundtype = "出库材料";
+                        ibr.employment = lydw;
                         ibr.khmc = this.StoreService.GetParentNameByLeafID(storeItem.DictionaryProperty.leaf_id.Value);
                         this.StoreService.InsertInboundRecord(ibr);
 
@@ -136,6 +155,7 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
                 OutBoundRecord obr = new OutBoundRecord();
                 obr.ckid = Guid.NewGuid();
                 obr.node_id = tempid;
+                obr.employment = lydw;
                 obr.number = OutProductNumber;
                 this.StoreService.InsertOutBoundRecord(obr);
             }

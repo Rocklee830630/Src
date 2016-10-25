@@ -7,7 +7,7 @@ using System.Web;
 using System.Web.Mvc;
 using GMS.Framework.Utility;
 using GMS.Store.Contract;
- 
+using System.IO;
 
 namespace GMS.Web.Admin.Areas.Store.Controllers
 {
@@ -27,6 +27,30 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
             this.ViewBag.OperateType = new SelectListItem() { };
             var ibr = this.StoreService.GetInBound(request);
             return View(ibr);
+        }
+
+        [HttpPost]
+        public ActionResult ExportToExcel()
+        {
+            NPOI.SS.UserModel.IWorkbook workbook = new NPOI.XSSF.UserModel.XSSFWorkbook();
+            NPOI.SS.UserModel.ICell cell;
+            NPOI.SS.UserModel.ISheet sheet = workbook.CreateSheet("出入库记录");
+            int i = 0;
+            int rowLimit = 100;
+            DateTime originalTime = DateTime.Now;
+            for (i = 0; i < rowLimit; i++)
+            {
+                cell = sheet.CreateRow(i).CreateCell(0);
+                cell.SetCellValue("值" + i.ToString());
+            }
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                workbook.Write(ms);
+                var buffer = ms.GetBuffer();
+                ms.Close();
+                return File(buffer, "application/ms-excel", "test.xlsx");
+            }
         }
     }
 }

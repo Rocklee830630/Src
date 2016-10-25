@@ -19,6 +19,8 @@ namespace GMS.Store.Contract
 
         public decimal? number { get; set; }
 
+        public string employment { get; set; }
+
         public DateTime? out_bound_time { get; set; }
 
         public virtual DictionaryTree DictionaryTree { get; set; }

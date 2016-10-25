@@ -84,6 +84,12 @@
                 $('#validtxt').css('color', '#FF0000');
                 return false;
             }
+            if ($('#employment').val() == "请选择领用人...")
+            {
+                $('#validtxt').text("请选择领用人！");
+                $('#validtxt').css('color', '#FF0000');
+                return false;
+            }
             var outcount = $("#OutBoundCount").val();
             $.ajax({
                 type: "POST",
@@ -192,6 +198,13 @@
                  <p><font color="#FF0000">（单位：件）提示：出库按成品件数出库，系统自动计算材料。</font>
             </div>
            
+        </div>
+        <div class="control-group">
+            <label class="control-label"><span class="required">*</span>领用单位：</label>
+            <div class="controls">
+                @Html.DropDownList("employment") 
+            </div>
+
         </div>
     </div>
 </div>

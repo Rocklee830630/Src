@@ -27,6 +27,8 @@ namespace GMS.Store.Contract
 
         public string khmc { get; set; }
 
+        public string employment { get; set; }
+
         public virtual DictionaryProperty DictionaryProperty { get; set; }
     }
 }
