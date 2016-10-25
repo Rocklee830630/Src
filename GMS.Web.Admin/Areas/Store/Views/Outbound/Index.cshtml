@@ -14,6 +14,12 @@
         laydate.skin('yalan');
         $("#starttime").click(function () { laydate({elem: '#starttime', istime: true, format: 'YYYY-MM-DD hh:mm:ss' }); });
         $("#endtime").click(function () { laydate({ elem: '#endtime', istime: true, format: 'YYYY-MM-DD hh:mm:ss' }); });
+        $("#exportBtn").click(function () {
+            $("#export").val("export");
+        });
+        $("#searchBtn").click(function () {
+            $("#export").val("search");
+        })
     </script>
 }
 <div class="row-fluid">
@@ -28,9 +34,11 @@
         {
             <div class="dataTables_filter">
                 <label>
-                    <button type="submit" class="btn">搜索 <i class="icon-search"></i></button>
+                    <button id="searchBtn" type="submit" class="btn">搜索 <i class="icon-search"></i></button>
+                    <button id="exportBtn" href="@Url.Action("ExportToExcel")" class="btn">导出 <i class="icon-share"></i></button>
                 </label>
                 <label>
+                    @Html.Hidden("export", "", new { @class = "m-wrap small" })
                     <span>客户名称：</span>
                     @Html.TextBox("khmc", null, new { @class = "m-wrap small" })
                 </label>

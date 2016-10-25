@@ -21,6 +21,7 @@ namespace GMS.Store.Contract
     {
         public Guid Gid { get; set; }
         public string Name { get; set; }
+        public string export { get; set; }
         public string orderType { get; set; }
         public string clmc { get; set; }
     }
@@ -33,7 +34,8 @@ namespace GMS.Store.Contract
     public class OutBoundRequest:Request
     {
         public string khmc { get; set; }
-        public string ddmc { get; set; }
+        public string ddmc { get; set; } 
+        public string export { get; set; }
         public DateTime starttime { get; set; }
         public DateTime endtime { get; set; }
     }

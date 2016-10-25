@@ -177,22 +177,23 @@ namespace GMS.Web.Admin.Areas.Account.Controllers
         public PartialViewResult AddProperty(StoreTreeNameRequests request,FormCollection collection)
         {
             var model = new DictionaryProperty();
-            this.TryUpdateModel<DictionaryProperty>(model);
-
+            this.TryUpdateModel<DictionaryProperty>(model); 
             string id = null;
-            if (this.TempData.ContainsKey("treeid"))
-            {
-                id = this.TempData["treeid"].ToString();
+            if (collection["treeid"]!=null & collection["treeid"]!="")
+            { 
+                id = collection["treeid"].ToString();
                 //TempData.Remove("treeid");
-                request.treeID = new Guid(id.ToString());
+                request.treeID = new Guid(id.ToString()); 
             }
 
             if (id != null)
             {
                 Guid treeid = new Guid(id);
                 Guid keyid = Guid.NewGuid();
+                var MaxDPID = this.StoreService.GetMaxDPIDByLeaf(treeid);
                 model.leaf_id = treeid;
                 model.dpid = keyid;
+                model.ID = MaxDPID + 1;
             } 
             this.StoreService.SaveDictionaryProperty(model);
             //Dictionary<string, string> dp = new Dictionary<string, string>();
@@ -316,31 +317,27 @@ namespace GMS.Web.Admin.Areas.Account.Controllers
             DataTable dt = this.StoreService.ReadExcel(path);
             foreach (DataRow row in dt.Rows)
             {//判断exel数据异常返回，不存数据
-                var clmc = row[0].ToString();
-                var pm = row[1].ToString();
-                var mf = row[2].ToString();
-                if(row[3].ToString()==""|| row[3].ToString() ==null)
+                var clmc = row[1].ToString();
+                var pm = row[2].ToString();
+                var mf = row[3].ToString();
+                if(row[4].ToString()==""|| row[4].ToString() ==null)
                 {
-                    row[3] = 1;
+                    row[4] = 1;
                 }
-                var temp = decimal.Parse(row[3].ToString());
+                var temp = decimal.Parse(row[4].ToString());
             }
+            var MaxDPID = this.StoreService.GetMaxDPIDByLeaf(request.treeID);
             foreach (DataRow row in dt.Rows)
             {
                 Guid keyid = Guid.NewGuid();
+                model.ID = int.Parse(row[0].ToString())+ MaxDPID;
                 model.dpid = keyid;
-                model.clmc = row[0].ToString();
-                model.pm = row[1].ToString(); 
-                model.mf = row[2].ToString();
-                model.js = decimal.Parse(row[3].ToString()) ;
+                model.clmc = row[1].ToString();
+                model.pm = row[2].ToString(); 
+                model.mf = row[3].ToString();
+                model.js = decimal.Parse(row[4].ToString()) ;
                 this.StoreService.SaveDictionaryProperty(model);
-            }
-
-            //Dictionary<string, string> dp = new Dictionary<string, string>();
-            //dp.Add("clmc", model.clmc);
-            //dp.Add("pm", model.pm);
-            //dp.Add("mf", model.mf);
-            //dp.Add("js", model.js);
+            } 
             request.PageSize = 500;
             var result = this.StoreService.GetNodeProperty(request);
             return PartialView("_DPropertyPartialPage", result);

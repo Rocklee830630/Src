@@ -8,6 +8,8 @@ using System.Web.Mvc;
 using GMS.Framework.Utility;
 using GMS.Store.Contract;
 using GMS.OA.Contract;
+using System.Data;
+using System.IO;
 
 namespace GMS.Web.Admin.Areas.Store.Controllers
 {
@@ -16,6 +18,37 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
     {
         public ActionResult Index(StoreTableRequest request)
         {
+            if (request.export == "export")//导出EXCEL
+            {
+                request.PageSize = 10000000;
+                var ibrAll = this.StoreService.GetStoreList(request);
+                DataTable dt = new DataTable();
+                dt.Columns.Add("客户名称");
+                dt.Columns.Add("订单类别");
+                dt.Columns.Add("材料名称");
+                dt.Columns.Add("品名");
+                dt.Columns.Add("门幅");
+                dt.Columns.Add("基数/米");
+                dt.Columns.Add("库存量");
+
+                foreach (StoreTable storeItem in ibrAll)
+                {
+                    DataRow dr = dt.NewRow();
+                    dr["客户名称"] = storeItem.DictionaryProperty.DictionaryTree.parent_name;
+                    dr["订单类别"] = storeItem.DictionaryProperty.DictionaryTree.name;
+                    dr["材料名称"] = storeItem.DictionaryProperty.clmc;
+                    dr["品名"] = storeItem.DictionaryProperty.pm;
+                    dr["门幅"] = storeItem.DictionaryProperty.mf;
+                    dr["基数/米"] = storeItem.DictionaryProperty.js;
+                    dr["库存量"] = storeItem.number;
+                    dt.Rows.Add(dr);
+                }
+                byte[] excelByte = this.StoreService.DataTable2Excel(dt, "出入库记录");
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    return File(excelByte, "application/ms-excel", "库存记录.xls");
+                }
+            }
             var OrderList = this.StoreService.GetOrderList(new OrderRequest());
             this.ViewBag.OrederType = new SelectList(OrderList, "dt_id", "name");
             

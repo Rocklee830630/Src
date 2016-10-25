@@ -57,11 +57,13 @@
             } 
             if (dpitemid == "00000000-0000-0000-0000-000000000000")
             {
-                //alert("添加按钮");
+                //var id = $("#ddid", window.opener.document).val();
+                var id1 = parent.$('#ddid').val();
+                //alert("添加按钮"+id1);
                 $.ajax({
                     type: 'POST',
                     url: '@Url.Action("AddProperty")',
-                    data: { clmc: clmctext, pm: pmname, mf: mfname, js: jsname }, 
+                    data: { treeid: id1, clmc: clmctext, pm: pmname, mf: mfname, js: jsname },
                     ContentType: 'application/html;charset=utf-8',
                     dataType: 'html'
                 })

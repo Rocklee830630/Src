@@ -10,7 +10,7 @@ namespace GMS.Store.Contract
 {
     public interface IStoreService
     {
-        byte[] DataTable2Excel { get; set; }
+        byte[] DataTable2Excel(DataTable dt,string name);
 
         //获取树数据
         Object GetDictionaryTreeList(); 
@@ -66,5 +66,7 @@ namespace GMS.Store.Contract
         decimal GetPropertyNumber(Guid id);
 
         StoreTable ExistDPInStore(DictionaryProperty dp);
+
+        int GetMaxDPIDByLeaf(Guid id);
     }
 }

@@ -42,6 +42,8 @@
         <div style="padding-bottom: 2ex;" nowrap> 
             <a class="btn blue thickbox" id="addProperty" title='添加材料' href="@Url.Action("Create")?TB_iframe=true&height=350&width=400&modal=true"><i class="icon-plus icon-white"></i> 添加材料</a>
             <a class="btn red" id="deleteproperty" href="javascript:;"><i class="icon-trash icon-white"></i> 删除</a> 
+            
+            @Html.Hidden("ddid", null, new { @class = "m-wrap small" })
         </div> 
     </div>
     <div class="span1"> 
@@ -52,6 +54,7 @@
     </div>
     <div class="span2" id="some_file_queue"></div> 
     <div class="span9" id="tablediv">
+        
      Html.RenderPartial("_DPropertyPartialPage", Model); 
     </div> 
 </div>
@@ -150,7 +153,8 @@
         //alert(treeNode.id + ", " + treeNode.name);
         //点击刷新右侧列表
         SelectedId = treeNode.id;
-        
+         
+        $("#ddid").val(SelectedId);
         GetProperty(treeNode.isParent, treeNode.id);
     };
 

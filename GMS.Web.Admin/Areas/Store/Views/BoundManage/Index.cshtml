@@ -117,8 +117,11 @@
         $("#Name").val("");
         $("#clmc").val("");
     });
-    $("#export").click(function () {
-        alert("测试");
+    $("#exportBtn").click(function () {
+        $("#export").val("export");
+    });
+    $("#searchBtn").click(function () {
+        $("#export").val("search");
     })
 </script>
 }
@@ -136,11 +139,12 @@
         {
             <div class="dataTables_filter">
                 <label>
-                    <button type="submit" class="btn">搜索 <i class="icon-search"></i></button>
-                    <button type="submit" id="export" href="@Url.Action("ExportToExcel")" class="btn">导出 <i class="icon-share"></i></button>
+                    <button type="submit" id="searchBtn" class="btn">搜索 <i class="icon-search"></i></button>
+                    <button type="submit" id="exportBtn" href="@Url.Action("ExportToExcel")" class="btn">导出 <i class="icon-share"></i></button>
                     <button class="btn" id="clearContent">清除选项 <i class="icon-trash icon-white"></i></button> 
                 </label>  
                 <label> 
+                    @Html.Hidden("export", "", new { @class = "m-wrap small" })
                     @* 搜索完成后会刷新页面，此处Name是request属性可保存树形节点名字 *@
                     @Html.Hidden("Name", null, new { @class = "m-wrap small" })
                 </label>
@@ -167,7 +171,7 @@
                     <input type="checkbox" id="checkall" class="group-checkable" />
                 </th>
                 <th>
-                    订单分类
+                    客户名称
                 </th>
                 <th>
                     订单类别
