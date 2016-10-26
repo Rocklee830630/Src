@@ -52,14 +52,7 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
             var OrderList = this.StoreService.GetOrderList(new OrderRequest());
             this.ViewBag.OrederType = new SelectList(OrderList, "dt_id", "name");
             
-            var result = this.StoreService.GetStoreList(request);
-            //foreach(StoreTable st in result)
-            //{
-            //    DictionaryTree dt = new DictionaryTree();
-            //    dt.dt_id = st.DictionaryProperty.leaf_id.Value;
-            //    dt.name = this.StoreService.GetParentNameByLeafID(dt.dt_id);
-            //    st.DictionaryProperty.DictionaryTree = dt;
-            //} 
+            var result = this.StoreService.GetStoreList(request); 
             return View(result);
         }
 
@@ -295,8 +288,7 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
 
             this.StoreService.OutBoundItem(st);
             return this.RefreshParent();
-        }
-
+        } 
         /// <summary>
         /// 提交入库action
         /// </summary>
@@ -306,8 +298,42 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
         public ActionResult InBoundEdit(FormCollection collection)
         { 
             var model = new StoreTable();
+            var inBoundCounts = collection["InBoundCount"];
             //this.TryUpdateModel<StoreTable>(model);
             InBoundRecord ibr = new InBoundRecord(); 
+            if(inBoundCounts.Contains(","))
+            {
+                //批量添加材料
+                //var tempdpids = TempData["dpids"];
+                string dpids = collection["cllb"];
+                string[] arrTemp = dpids.Split(',');
+                string[] arrCountTemp = inBoundCounts.Split(',');
+                for (int i=1;i<arrTemp.Length;i++)
+                {
+                    decimal temp = 0;
+                    if (!decimal.TryParse(arrCountTemp[i], out temp))
+                    {
+                        arrCountTemp[i] = "0";
+                    }
+                    var modelTemp = new StoreTable();
+                    InBoundRecord ibrTemp = new InBoundRecord();
+                    Guid proid = new Guid(arrTemp[i]);
+                    modelTemp.number = decimal.Parse(arrCountTemp[i]);
+                    DictionaryProperty dp = this.StoreService.GetDicProperty(proid, collection["Materialnames"]);
+                    modelTemp.store_item_id = dp.dpid;
+
+                    //插入数据到入库记录表 
+                    ibrTemp.inbound_id = dp.dpid;
+                    ibrTemp.rkid = Guid.NewGuid();
+                    ibrTemp.number = modelTemp.number;
+                    ibrTemp.boundtype = "入库";
+                    ibrTemp.khmc = this.StoreService.GetParentNameByLeafID(dp.leaf_id.Value);
+                    this.StoreService.InsertInboundRecord(ibrTemp);
+                    ///入库
+                    this.StoreService.InsertStoreItem(modelTemp);
+                }
+                return this.RefreshParent(); 
+            }
             if (collection.AllKeys.Contains("DictionaryProperty.dpid"))
             {
                 Guid proid = new Guid(collection["clID"]);
@@ -383,6 +409,7 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
 
                 }
             }
+            TempData["dpids"] = ibp.dpid;
             string jsonItem = JsonHelper.JsonSerializer(ibp); 
             return Json(jsonItem); 
         }

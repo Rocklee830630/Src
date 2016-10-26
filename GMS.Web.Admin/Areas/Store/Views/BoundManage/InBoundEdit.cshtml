@@ -70,9 +70,32 @@
             $('#mf').attr("disabled", true);
             $('#pm').attr("disabled", true);
             $('#js').attr("disabled", true);
-            
-            //$.fn.zTree.init($("#treeDemo"), setting, zNodes);
+            $('#clmclable').hide();
+            $('#rksllable').hide();
             createTree();
+            $('#pllr').click(function () {
+                if ($('#pllr').is(':checked')) {
+                    $('#clmclable').show();
+                    $('#rksllable').show();
+                    $('#clmccgroup').hide();
+                    $('#rkslgroup').hide();
+                    $('#pmgroup').hide();
+                    $('#mfgroup').hide();
+                    $('#jsgroup').hide();
+                    $('#group1').show();
+                }
+                else {
+                    $('#clmclable').hide();
+                    $('#rksllable').hide();
+                    $('#group1').hide();
+                    $('#clmccgroup').show();
+                    $('#rkslgroup').show();
+                    $('#pmgroup').show();
+                    $('#mfgroup').show();
+                    $('#jsgroup').show();
+                }
+
+            });
         });
 
         function createTree() {
@@ -108,15 +131,26 @@
                 data: { id: orderid },
                 ContentType: "application/text;charset=utf-8",
                 dataType: 'json'
-                })
+            })
                 .success(function (datas) {
+                    $('#group1').empty();
                     var obj = JSON.parse(datas);
                     $("#Materialnames").empty();
                     $("#khmc").val(obj["khmc"]);
                     document.getElementById("Materialnames").add(new Option("请选择材料..."));
-                    for(var i=0;i<obj["clmc"].length;i++)
-                    {
-                        document.getElementById("Materialnames").add(new Option(obj["clmc"][i],obj["dpid"][i]));
+                     
+                    for (var i = 0; i < obj["clmc"].length; i++) {
+                        document.getElementById("Materialnames").add(new Option(obj["clmc"][i], obj["dpid"][i]));
+                        //var temptext = obj["dpid"][i];
+                        var newInput = $(document.createElement('Input')).attr({
+                                "type": "text",
+                                "id": obj["dpid"][i]
+                            });
+
+                        var areahtml = '<div class="control-group"><label class="control-label"><span class="required">*</span>' + obj["clmc"][i] + '：</label><div class="controls">' + '@Html.TextBox("InBoundCount","0", new { @class = "m-wrap small"})' + '（可精确到小数点后两位）</div> </div>';
+                        //alert(areahtml);
+                        $('#group1').append(areahtml);
+                        $('#cllb').val( $('#cllb').val()+","+obj["dpid"][i]);
                     };
                     __tempdata["orderdata"] = datas;
                 })
@@ -131,7 +165,7 @@
             var obj = JSON.parse(orderdata);
             var number;
             var sel = $("#Materialnames").find("option:selected").text();
-           
+
             for (var i = 0; i < obj["clmc"].length; i++) {
                 if (obj["clmc"][i] == sel)
                     number = i;
@@ -148,25 +182,26 @@
             if (reg.test(num)) return true;
             return false;
         }
-        $("#submit1").click(function () {  
-            $('#validtxt').text(" "); 
-            if (orderId.value == "" || orderId.value == null)
-            {
+        $("#submit1").click(function () {
+            $('#validtxt').text(" ");
+            if (orderId.value == "" || orderId.value == null) {
                 $('#validtxt').text("请选择订单！");
                 $('#validtxt').css('color', '#FF0000');
                 return false;
             }
-            if (Materialnames.value == "请选择材料...") {
-                $('#validtxt').text("请选择材料！");
-                $('#validtxt').css('color', '#FF0000');
-                return false;
-            } 
-            if (!validate(InBoundCount.value)) {
-                $('#validtxt').text("入库数量必须是数字（两位小数）！");
-                $('#validtxt').css('color', '#FF0000');
-                return false;
+            if (!$('#pllr').is(':checked')) {
+                if (Materialnames.value == "请选择材料...") {
+                    $('#validtxt').text("请选择材料！");
+                    $('#validtxt').css('color', '#FF0000');
+                    return false;
+                }
+                if (!validate(InBoundCount.value)) {
+                    $('#validtxt').text("入库数量必须是数字（两位小数）！");
+                    $('#validtxt').css('color', '#FF0000');
+                    return false;
+                }
             }
-        }); 
+        });
     </script>
 }
 @section PageSpecificStyleSheetIncludes{
@@ -179,8 +214,10 @@
     <link href="/Content/zTree.theme.metro.css" rel="stylesheet" />
 }
 @section MainContent{ 
+@using (Html.BeginForm("BoundManageController", "InBoundEdit", FormMethod.Post))
+{
     <div class="portlet-body form-horizontal form-bordered form-row-stripped">
-        <div class="row-fluid">
+        <div id="group" class="row-fluid">
             <div class="control-group">
                 <label class="control-label"><span class="required">*</span>客户名称：</label>
                 <div class="controls">
@@ -196,53 +233,61 @@
                 <div class="controls">
                     @Html.HiddenFor(m => m.DictionaryProperty.dpid, new { id = "orderId", @class = "m-wrap large" })
                     @*<input id="orderId" type="hidden" value=""/>*@
-                    <input id="citySel" type="text" value="请选择...." style="width:120px;" />
-                </div>
+                    <input id="citySel" type="text" value="请选择...." style="width:120px;" /> 
+                    <label class="checkbox-inline" style="padding-left:30px;"><input type="checkbox" id="pllr">批量入库</label>
+                </div>  
             </div>
             <div class="control-group">
+                <span class="label label-primary" id="clmclable" style="font-size:large;margin-left:25px;margin-right:25px">材料名称</span>
+                <span class="label label-primary" id="rksllable" style="font-size:large;margin-left:50px;">入库数量</span>
+            </div>
+            <div class="control-group" id="clmccgroup">
                 <label class="control-label"><span class="required">*</span>材料名称：</label>
                 <div class="controls">
                     @Html.DropDownList("Materialnames")
-                    @Html.Hidden("clID")
-                    
+                    @Html.Hidden("clID") 
+                    @Html.Hidden("cllb") 
                 </div>
             </div>
-            <div class="control-group">
+            <div class="control-group" id="rkslgroup">
                 <label class="control-label"><span class="required">*</span>入库数量：</label>
                 <div class="controls">
                     @Html.TextBox("InBoundCount", "", new { @class = "m-wrap large" })（可精确到小数点后两位）
-                </div>
-                   
+                </div> 
             </div>
-            <div class="control-group">
+            <div class="control-group" id="pmgroup">
                 <label class="control-label">品名：</label>
                 <div class="controls">
                     @Html.TextBoxFor(m => m.DictionaryProperty.pm, new { id = "pm", @class = "m-wrap large" })
                 </div>
             </div>
-            <div class="control-group">
+            <div class="control-group" id="mfgroup">
                 <label class="control-label">门幅：</label>
                 <div class="controls">
                     @Html.TextBoxFor(m => m.DictionaryProperty.mf, new { id = "mf", @class = "m-wrap large" })
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="control-group" id="jsgroup">
                 <label class="control-label">基数/米：</label>
                 <div class="controls">
                     @Html.TextBoxFor(m => m.DictionaryProperty.js, new { id = "js", @class = "m-wrap large" })
                 </div>
+            </div>  
+        </div> 
+            <div id="group1" class="row-fluid">
+
             </div> 
-        </div>
     </div>
 <div style="height:100px;"></div>
 
-<div class="form-actions navbar-fixed-bottom">
-    <button type="submit" id="submit1" class="btn blue"><i class="icon-ok"></i> 提交</button>
-    <span id="submitloading" style="display:none;"><img src='@Url.StaticFile("/content/images/loading.gif")' /></span>
-    <button type="button" class="btn" id="cancel">取消</button>
-    <span id="validtxt"></span>
- </div>
+    <div class="form-actions navbar-fixed-bottom">
+        <button type="submit" id="submit1" class="btn blue"><i class="icon-ok"></i> 提交</button>
+        <span id="submitloading" style="display:none;"><img src='@Url.StaticFile("/content/images/loading.gif")' /></span>
+        <button type="button" class="btn" id="cancel">取消</button>
+        <span id="validtxt"></span>
+     </div>
+}
     <div id="menuContent" class="menuContent" style="display:none; position: absolute;">
         <ul id="treeDemo" class="ztree" style="margin-top:0; width:160px;"></ul>
     </div> 
