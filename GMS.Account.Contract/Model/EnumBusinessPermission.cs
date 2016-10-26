@@ -16,13 +16,15 @@ namespace GMS.Account.Contract
         [EnumTitle("管理用户")]
         AccountManage_User = 101,
 
+        [EnumTitle("库房管理")]
+        StoreManage = 503,
         /// <summary>
         /// 管理角色
         /// </summary>
         [EnumTitle("管理角色")]
         AccountManage_Role = 102,
 
-        [EnumTitle("字典管理")]
+        [EnumTitle("材料字典管理")]
         Order_Itembase = 103,
 
         [EnumTitle("CMS管理文章")]
@@ -48,20 +50,18 @@ namespace GMS.Account.Contract
         [EnumTitle("OA管理员工")]
         OAManage_Staff = 401,
 
-        [EnumTitle("OA管理部门")]
+        [EnumTitle("部门领用人管理")]
         OAManage_Branch = 402,
 
         [EnumTitle("组织结构管理")]
         OAManage_Org = 403,
 
-        [EnumTitle("物料入库")]
+        [EnumTitle("出入库信息")]
         StoreManage_Inbound = 501,
 
-        [EnumTitle("物料出库")]
+        [EnumTitle("出库信息")]
         StoreManage_Outbound = 502,
 
-        [EnumTitle("库房管理")]
-        StoreManage = 503,
 
 
     }
