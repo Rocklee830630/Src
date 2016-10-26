@@ -136,7 +136,7 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
                 foreach(DictionaryProperty dp in dpLists)
                 {
                     var storeItem = this.StoreService.ExistDPInStore(dp);
-                    tempid = dp.DictionaryTree.parent_id;
+                    tempid = dp.leaf_id.Value;
                     //判断store里是否有dp
                     if (storeItem == null)
                     {
@@ -298,27 +298,27 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
         public ActionResult InBoundEdit(FormCollection collection)
         { 
             var model = new StoreTable();
-            var inBoundCounts = collection["InBoundCount"];
+            var inBoundCounts = collection["InBoundCounts"];
             //this.TryUpdateModel<StoreTable>(model);
             InBoundRecord ibr = new InBoundRecord(); 
-            if(inBoundCounts.Contains(","))
+            if(bool.Parse(collection["pllr"].Split(',')[0]))
             {
                 //批量添加材料
                 //var tempdpids = TempData["dpids"];
                 string dpids = collection["cllb"];
                 string[] arrTemp = dpids.Split(',');
                 string[] arrCountTemp = inBoundCounts.Split(',');
-                for (int i=1;i<arrTemp.Length;i++)
+                for (int i=1;i< arrTemp.Length;i++)
                 {
                     decimal temp = 0;
-                    if (!decimal.TryParse(arrCountTemp[i], out temp))
+                    if (!decimal.TryParse(arrCountTemp[i-1], out temp))
                     {
-                        arrCountTemp[i] = "0";
+                        temp = 0;
                     }
                     var modelTemp = new StoreTable();
                     InBoundRecord ibrTemp = new InBoundRecord();
                     Guid proid = new Guid(arrTemp[i]);
-                    modelTemp.number = decimal.Parse(arrCountTemp[i]);
+                    modelTemp.number = temp;
                     DictionaryProperty dp = this.StoreService.GetDicProperty(proid, collection["Materialnames"]);
                     modelTemp.store_item_id = dp.dpid;
 
@@ -337,14 +337,13 @@ namespace GMS.Web.Admin.Areas.Store.Controllers
             if (collection.AllKeys.Contains("DictionaryProperty.dpid"))
             {
                 Guid proid = new Guid(collection["clID"]);
-                int temp = 0;
-                if(!int.TryParse(collection["InBoundCount"],out temp))
+                decimal temp = 0;
+                if(!decimal.TryParse(collection["InBoundCount"],out temp))
                 {
-                    ModelState.AddModelError("", "The current password is incorrect or the new password is invalid.");
-                    return PartialView();
+                    temp = 0;
                 }
                 
-                model.number = int.Parse(collection["InBoundCount"]);
+                model.number = temp;
                  
                 DictionaryProperty dp = this.StoreService.GetDicProperty(proid, collection["Materialnames"]);
                 model.store_item_id = dp.dpid;
